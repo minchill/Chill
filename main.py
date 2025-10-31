@@ -737,6 +737,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 ## LỆNH HELP
+bot.remove_command("help")
 @bot.command(name="bhelp", aliases=["help","commands"])
 async def help_cmd(ctx):
     txt = (
