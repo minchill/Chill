@@ -1209,7 +1209,7 @@ async def profile_cmd(ctx, target: str = None):
 # LỆNH PHÁT NHẠC (PLAY) - ĐÃ LOẠI BỎ ALIAS DƯ THỪA CHỮ B
 # ====================================================================
 
-@bot.command(name="play", aliases=["p", "tts"]) # Dùng !play hoặc !p
+@bot.command(name="play", aliases=["!p", "!play"]) # Dùng !play hoặc !p
 async def play_cmd(ctx, *, source: str = None):
     """
     Phát file âm thanh từ URL hoặc chuyển Text sang Speech (TTS).
