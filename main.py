@@ -1416,7 +1416,20 @@ async def help_cmd(ctx):
 async def shoppet_dummy_cmd(ctx):
     """Giữ lại lệnh này để giữ cấu trúc 10 phần, nhưng sử dụng lệnh Shop chính."""
     await ctx.send("✅ Lệnh `bshoppet` (Cửa hàng Pet) đã được tích hợp vào lệnh `bshop` hoặc `bpetshop`!")
-  # ====================================================================
+  
+        await ctx.send(f"❌ Đã xảy ra lỗi: {error}")
+
+if __name__ == "__main__":
+    try:
+        # Nếu bạn dùng os.getenv, hãy đảm bảo biến môi trường được thiết lập
+        if TOKEN == "YOUR_BOT_TOKEN_HERE":
+            print("⚠️ CẢNH BÁO: Vui lòng thay 'YOUR_BOT_TOKEN_HERE' bằng token bot thực tế của bạn.")
+        bot.run(TOKEN)
+    except discord.HTTPException as e:
+        print(f"❌ LỖI KẾT NỐI DISCORD: Vui lòng kiểm tra Token và Intents. Chi tiết: {e}")
+    except Exception as e:
+        print(f"❌ LỖI KHÔNG XÁC ĐỊNH KHI CHẠY BOT: {e}")
+      # ====================================================================
 # PHẦN 10: CHẠY BOT (ĐÃ FIX LỖI TOKEN CHO RAILWAY)
 # ====================================================================
 
@@ -1481,16 +1494,3 @@ if __name__ == "__main__":
     
 # --- KẾT THÚC FILE main.py ---
         
-        await ctx.send(f"❌ Đã xảy ra lỗi: {error}")
-
-if __name__ == "__main__":
-    try:
-        # Nếu bạn dùng os.getenv, hãy đảm bảo biến môi trường được thiết lập
-        if TOKEN == "YOUR_BOT_TOKEN_HERE":
-            print("⚠️ CẢNH BÁO: Vui lòng thay 'YOUR_BOT_TOKEN_HERE' bằng token bot thực tế của bạn.")
-        bot.run(TOKEN)
-    except discord.HTTPException as e:
-        print(f"❌ LỖI KẾT NỐI DISCORD: Vui lòng kiểm tra Token và Intents. Chi tiết: {e}")
-    except Exception as e:
-        print(f"❌ LỖI KHÔNG XÁC ĐỊNH KHI CHẠY BOT: {e}")
-      
