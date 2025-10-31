@@ -1205,18 +1205,80 @@ async def profile_cmd(ctx, target: str = None):
 
 # ... (Các lệnh Admin ở trên giữ nguyên) ...
 
+# PHẦN 8/10: LỆNH ADMIN VÀ UTILITY
+
+# Giả định các hàm/biến sau đã được định nghĩa ở các phần trước:
+# import discord
+# from discord.ext import commands
+# import asyncio, os
+# from gtts import gTTS
+# is_valid_url (từ PHẦN 7)
+
 # ====================================================================
-# LỆNH PHÁT NHẠC (PLAY) - ĐÃ LOẠI BỎ ALIAS DƯ THỪA CHỮ B
+# CÁC HÀM HỖ TRỢ CHO LỆNH ADMIN
 # ====================================================================
 
-@bot.command(name="play", aliases=["!p", "!play"]) # Dùng !play hoặc !p
+def get_admin_list():
+    """Đọc danh sách Admin IDs từ file."""
+    try:
+        with open("admin_list.txt", "r") as f:
+            return [int(line.strip()) for line in f if line.strip()]
+    except FileNotFoundError:
+        return []
+
+def save_admin_list(admin_ids):
+    """Lưu danh sách Admin IDs vào file."""
+    with open("admin_list.txt", "w") as f:
+        for admin_id in admin_ids:
+            f.write(f"{admin_id}\n")
+
+async def is_admin_or_owner(ctx):
+    """Kiểm tra xem người dùng có phải là Admin bot hay Chủ Server không."""
+    if ctx.author.id in get_admin_list():
+        return True
+    if ctx.author == ctx.guild.owner:
+        return True
+    return False
+
+# ====================================================================
+# LỆNH ADMIN
+# ====================================================================
+
+@bot.command(name="addadmin")
+@commands.check(lambda ctx: ctx.author == ctx.guild.owner) # Chỉ Chủ Server mới được thêm
+async def addadmin_cmd(ctx, member: discord.Member):
+    """Thêm một thành viên vào danh sách Admin của bot."""
+    admin_ids = get_admin_list()
+    if member.id not in admin_ids:
+        admin_ids.append(member.id)
+        save_admin_list(admin_ids)
+        await ctx.send(f"✅ Đã thêm **{member.display_name}** vào danh sách Admin bot.")
+    else:
+        await ctx.send(f"❌ **{member.display_name}** đã là Admin rồi.")
+
+@bot.command(name="deladmin", aliases=["removeadmin"])
+@commands.check(lambda ctx: ctx.author == ctx.guild.owner) # Chỉ Chủ Server mới được xóa
+async def deladmin_cmd(ctx, member: discord.Member):
+    """Xóa một thành viên khỏi danh sách Admin của bot."""
+    admin_ids = get_admin_list()
+    if member.id in admin_ids:
+        admin_ids.remove(member.id)
+        save_admin_list(admin_ids)
+        await ctx.send(f"✅ Đã xóa **{member.display_name}** khỏi danh sách Admin bot.")
+    else:
+        await ctx.send(f"❌ **{member.display_name}** không có trong danh sách Admin.")
+
+# ====================================================================
+# LỆNH PHÁT NHẠC (PLAY) - ĐÃ FIX ALIAS
+# ====================================================================
+
+@bot.command(name="play", aliases=["tts"]) # Chỉ dùng bplay hoặc btts
 async def play_cmd(ctx, *, source: str = None):
     """
     Phát file âm thanh từ URL hoặc chuyển Text sang Speech (TTS).
-    Cú pháp: !play <URL> hoặc !play <Văn bản>
+    Cú pháp: bplay <URL> hoặc bplay <Văn bản>
     """
     if source is None:
-        # Sử dụng ctx.prefix để thông báo chính xác
         return await ctx.send(f"❌ Cú pháp: `{ctx.prefix}play <URL file âm thanh>` hoặc `{ctx.prefix}play <văn bản TTS>`.")
 
     if not ctx.author.voice or not ctx.author.voice.channel:
@@ -1237,7 +1299,7 @@ async def play_cmd(ctx, *, source: str = None):
         await asyncio.sleep(0.5)
 
     try:
-        # Sử dụng is_valid_url(source) (đã có ở PHẦN 7)
+        # Sử dụng is_valid_url(source) (giả định đã có)
         if is_valid_url(source) and (source.endswith(('.mp3', '.mp4', '.ogg', '.wav')) or "youtube" in source or "youtu.be" in source):
             # --- PHÁT NHẠC TỪ URL ---
             FFMPEG_OPTIONS = {
@@ -1296,33 +1358,63 @@ async def stop_cmd(ctx):
 
 
 # ====================================================================
-# LỆNH TRỢ GIÚP (HELP) - TRẢ LẠI ALIAS "BHELP"
+# LỆNH TRỢ GIÚP (HELP) - ĐÃ LÀM CUTE VÀ HOÀN CHỈNH
 # ====================================================================
 
-@bot.command(name="help", aliases=["commands", "h", "bhelp"]) 
+@bot.command(name="help", aliases=["commands", "h", "bhelp", "b"]) 
 async def help_cmd(ctx):
     """Hiển thị danh sách các lệnh."""
-    prefix = ctx.prefix 
+    prefix = ctx.prefix # Tiền tố hiện tại là "b"
     
     embed = discord.Embed(
-        title="🤖 Danh Sách Lệnh của Bot",
-        description=f"Đây là các lệnh bạn có thể sử dụng (tiền tố lệnh: `{prefix}`).",
-        color=discord.Color.blue()
+        title="🌸 Sổ Tay Lệnh Của Tớ 🌸",
+        description=f"Hihi, tớ là Bot dễ thương nhất trong server này! Bạn dùng `{prefix}tênlệnh` nha.",
+        color=discord.Color.pink()
     )
     
-    # Thêm các lệnh chính
-    embed.add_field(name=f"🎶 {prefix}play <URL/Text> / {prefix}p", 
-                    value="Phát nhạc từ link hoặc chuyển văn bản thành giọng nói (TTS).", 
-                    inline=False)
-    embed.add_field(name=f"🛑 {prefix}stop / {prefix}leave", 
-                    value="Dừng phát nhạc và ngắt kết nối bot khỏi kênh thoại.", 
-                    inline=False)
-    embed.add_field(name=f"ℹ️ {prefix}help / {prefix}bhelp", 
-                    value="Hiển thị danh sách lệnh này.", 
-                    inline=False)
+    # 1. NHÓM LỆNH ÂM NHẠC & TTS
+    embed.add_field(
+        name="🎶 Nhóm Nhạc & Giọng Nói", 
+        value=f"• `{prefix}play` / `{prefix}tts` (Link/Text): Tớ hát cho bạn nghe, hoặc đọc văn bản siêu nhanh.\n"
+              f"• `{prefix}stop` / `{prefix}leave`: Dừng tớ lại và tớ sẽ tạm biệt bạn.", 
+        inline=False
+    )
+                    
+    # 2. NHÓM LỆNH TƯƠNG TÁC/TRÒ CHƠI
+    embed.add_field(
+        name="🧸 Nhóm Tương Tác Cưng Chiều", 
+        value=f"Dùng các lệnh này để thể hiện tình cảm hoặc 'trêu' bạn bè (dùng `@user`).\n"
+              f"**Tình cảm:** `{prefix}yeu`, `{prefix}hon`, `{prefix}om`\n"
+              f"**Trêu chọc:** `{prefix}dam`, `{prefix}tat`, `{prefix}chui`, `{prefix}troll`\n"
+              f"**Cá nhân:** `{prefix}ngu`, `{prefix}khon` (dành cho bạn bè hoặc bot)", 
+        inline=False
+    )
+    
+    # 3. NHÓM LỆNH GAME VÀ KINH TẾ (ĐÃ SỬA CHỨC NĂNG BZOO)
+    embed.add_field(
+        name="🕹️ Nhóm Game & Kinh Tế (SẮP RA MẮT)",
+        value="Các lệnh này sẽ được hoàn thiện trong **PHẦN 9 & 10**.\n"
+              f"• `{prefix}cf`, `{prefix}inv`: Kiểm tra tiền và túi đồ.\n"
+              f"• `{prefix}hunt`: Đi săn để kiếm vật phẩm và pet.\n"
+              f"• **`{prefix}zoo`**: **Mở kho sở thú** (danh sách pet của bạn).\n" 
+              f"• `{prefix}shop`, `{prefix}shoppet`: Mua sắm vật phẩm và Thú cưng.\n"
+              f"• `{prefix}sleep`: Lệnh ngủ/cooldown.\n",
+        inline=False
+    )
+
+    # 4. NHÓM LỆNH TIỆN ÍCH & ADMIN
+    embed.add_field(
+        name="⚙️ Nhóm Tiện Ích & Quản Lý",
+        value=f"• `{prefix}help` / `{prefix}b`: Xem lại menu đáng yêu này.\n"
+              f"• `{prefix}ping`: Kiểm tra tốc độ phản hồi của tớ.\n"
+              f"• `{prefix}addadmin <@user>`, `{prefix}deladmin <@user>`: Quản lý quyền Admin (chỉ Chủ Server).",
+        inline=False
+    )
+
+    embed.set_footer(text="Cảm ơn bạn đã sử dụng tớ nha! ❤️")
     
     await ctx.send(embed=embed)
-    
+            
       # ====================================================================
 # PHẦN 9: LỆNH ANIME/MEDIA (Từ Railway)
 # ====================================================================
