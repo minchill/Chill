@@ -949,11 +949,10 @@ async def hunt_cmd(ctx):
         res += f"Pet **{strongest_pet['name']}** không nhận được gì."
         
     await ctx.send(f"{result_text}\n\n{res}\n\n*Lượt còn lại:* **{user['boss_runs']}**")
-  # ====================================================================
 # PHẦN 6: LỆNH TƯƠNG TÁC (SOCIAL & ROLEPLAY)
-# ====================================================================
 
 SOCIAL_ACTIONS = {
+    # Key phải là chữ thường để khớp với lệnh gọi.
     "hit": {"past": "đánh", "desc": "đã tung cú đấm chí mạng vào", "emoji": "💥"}, 
     "hug": {"past": "ôm", "desc": "đã ôm chặt lấy", "emoji": "🫂"}, 
     "kiss": {"past": "hôn", "desc": "đã tặng một nụ hôn e thẹn cho", "emoji": "💖"}, 
@@ -962,137 +961,58 @@ SOCIAL_ACTIONS = {
     "cuddle": {"past": "rúc vào", "desc": "đã rúc vào người", "emoji": "💞"}, 
     "poke": {"past": "chọc", "desc": "đã chọc vào má", "emoji": "👉"}, 
 }
-MARRIAGE_FEE = 10000
+# ... (Các hàm trợ giúp get_member, MARRIAGE_FEE, v.v. giữ nguyên) ...
 
-# Hàm trợ giúp lấy member
-async def get_member(ctx, target_str):
-    if not target_str:
-        return None
-    try:
-        member_id = int(target_str.strip('<@!>'))
-        return await ctx.guild.fetch_member(member_id)
-    except:
-        return None
 
-@bot.command(name="interact")
-async def interact_cmd(ctx, action: str = None, target: str = None):
-    if action is None or target is None:
-        return await ctx.send("❌ Cú pháp: `b <hành động> <@người dùng>` (Ví dụ: `b hug @user`).")
-
-    action_data = SOCIAL_ACTIONS.get(action.lower())
+# Lệnh tương tác mới - Chỉ nhận Target và tự xác định Action
+@bot.command()
+async def interact_cmd(ctx, target: str = None):
+    """
+    Xử lý tất cả các lệnh tương tác (hug, kiss, hit, etc.).
+    Action được lấy từ tên lệnh đã gọi (ctx.invoked_with).
+    """
+    
+    # Lấy tên lệnh đã gọi (hug, kiss, hit, ...) và chuyển về chữ thường
+    invoked_name = ctx.invoked_with.lower()
+    
+    # Xử lý các tiền tố 'b' (ví dụ: bhug -> hug)
+    if invoked_name.startswith('b'):
+        action_name = invoked_name[1:]
+    else:
+        action_name = invoked_name
+        
+    action_data = SOCIAL_ACTIONS.get(action_name)
+    
     if not action_data:
-        return await ctx.send(f"❌ Hành động '{action}' không hợp lệ. Hãy thử: `hug, kiss, pat, hit, slap, cuddle, poke`.")
+        # Nếu lệnh gọi không phải là lệnh tương tác (ví dụ: chỉ gõ 'b' mà không có gì)
+        return 
+
+    if target is None:
+        return await ctx.send(f"❌ Cú pháp: `b{action_name} <@người dùng>`.")
 
     member_target = await get_member(ctx, target)
     if not member_target or member_target.id == ctx.author.id:
-        return await ctx.send("❌ Bạn không thể tự thực hiện hành động này hoặc người dùng không hợp lệ.")
+        return await ctx.send("❌ Người dùng không hợp lệ hoặc bạn không thể tự thực hiện hành động này.")
 
     # Lấy URL GIF
     author_data = get_user(ctx.author.id)
-    gif_url = get_action_image_url(author_data, f"{action}_gif")
+    gif_url = get_action_image_url(author_data, f"{action_name}_gif")
 
     embed = discord.Embed(
         description=f"{action_data['emoji']} **{ctx.author.display_name}** {action_data['desc']} **{member_target.display_name}**!",
-        color=discord.Color.red() if action in ["hit", "slap"] else discord.Color.green()
+        color=discord.Color.red() if action_name in ["hit", "slap"] else discord.Color.green()
     )
     embed.set_image(url=gif_url)
     await ctx.send(embed=embed)
 
 
-# Tạo alias cho từng lệnh tương tác (Đã thêm biến thể viết hoa)
+# Tạo lệnh tương tác và aliases cho từng hành động
 for action, data in SOCIAL_ACTIONS.items():
+    # Thêm aliases: hug, ôm, Hug, Ôm
     aliases = [data["past"], action.capitalize(), data["past"].capitalize()]
+    
+    # Định nghĩa lệnh mới
     bot.command(name=action, aliases=aliases)(interact_cmd)
-
-
-@bot.command(name="propose", aliases=["Propose"]) 
-async def propose_cmd(ctx, target: str = None):
-    # Logic cũ
-    member_target = await get_member(ctx, target)
-    if not member_target: return await ctx.send("❌ Người dùng không hợp lệ.")
-    if member_target.id == ctx.author.id: return await ctx.send("❌ Bạn không thể tự cầu hôn chính mình.")
-
-    author_data = get_user(ctx.author.id)
-    if author_data["married_to"]: return await ctx.send("❌ Bạn đã kết hôn rồi.")
-    if member_target.id == author_data["married_to"]: return await ctx.send("❌ Bạn đã kết hôn với người này rồi.")
-    if not author_data.get("ring"): return await ctx.send("❌ Bạn cần mua nhẫn cưới (Ring) trước khi cầu hôn! Dùng `bringshop`.")
-
-    embed = discord.Embed(
-        title="💖 LỜI CẦU HÔN NGỌT NGÀO",
-        description=f"**{member_target.mention}**, **{ctx.author.display_name}** đang cầu hôn bạn! Dùng `baccept {ctx.author.mention}` để đồng ý.",
-        color=discord.Color.light_grey()
-    )
-    embed.set_image(url=DEFAULT_IMAGE_LINKS["propose_gif"])
-    embed.set_footer(text=f"Người cầu hôn đã chuẩn bị nhẫn {RING_SHOP.get(author_data['ring'])['name']}!")
-    
-    await ctx.send(member_target.mention, embed=embed)
-
-
-@bot.command(name="accept", aliases=["Accept"]) 
-async def accept_cmd(ctx, proposer: str = None):
-    # Logic cũ
-    member_proposer = await get_member(ctx, proposer)
-    if not member_proposer: return await ctx.send("❌ Người dùng cầu hôn không hợp lệ.")
-
-    proposer_data = get_user(member_proposer.id)
-    target_data = get_user(ctx.author.id)
-    
-    if target_data["married_to"]: return await ctx.send("❌ Bạn đã kết hôn rồi.")
-    if proposer_data["married_to"]: return await ctx.send("❌ Người này đã kết hôn với người khác.")
-    if proposer_data["ring"] is None: return await ctx.send("❌ Người này chưa mua nhẫn.")
-    
-    if target_data["balance"] < MARRIAGE_FEE: 
-        return await ctx.send(f"❌ **{ctx.author.display_name}** cần **{MARRIAGE_FEE:,} xu** phí kết hôn.")
-
-    # Cập nhật trạng thái
-    target_data["married_to"] = member_proposer.id
-    proposer_data["married_to"] = ctx.author.id
-    update_balance(ctx.author.id, -MARRIAGE_FEE)
-    save_data(users)
-    
-    embed = discord.Embed(
-        title="💍 KẾT HÔN THÀNH CÔNG!",
-        description=f"🎉 **{member_proposer.display_name}** và **{ctx.author.display_name}** đã chính thức về chung một nhà! Chúc mừng hạnh phúc!",
-        color=discord.Color.purple()
-    )
-    embed.set_image(url=DEFAULT_IMAGE_LINKS["accept_gif"])
-    await ctx.send(f"{member_proposer.mention} {ctx.author.mention}", embed=embed)
-
-
-@bot.command(name="divorce", aliases=["Divorce"]) 
-async def divorce_cmd(ctx):
-    # Logic cũ
-    user = get_user(ctx.author.id)
-    spouse_id = user["married_to"]
-    
-    if not spouse_id: return await ctx.send("❌ Bạn chưa kết hôn.")
-    
-    spouse = await get_member(ctx, str(spouse_id))
-    if not spouse: return await ctx.send("❌ Không tìm thấy người bạn đời của bạn.")
-
-    # Xóa trạng thái kết hôn của cả hai
-    user["married_to"] = None
-    spouse_data = get_user(spouse_id)
-    if spouse_data:
-        spouse_data["married_to"] = None
-        
-    save_data(users)
-    await ctx.send(f"💔 **{ctx.author.display_name}** và **{spouse.display_name}** đã ly hôn. Hẹn gặp lại kiếp sau.")
-
-
-@bot.command(name="wife", aliases=["husband", "spouse", "Wife", "Husband", "Spouse"]) 
-async def check_spouse_cmd(ctx):
-    # Logic cũ
-    user = get_user(ctx.author.id)
-    spouse_id = user["married_to"]
-    
-    if not spouse_id: return await ctx.send("❌ Bạn chưa kết hôn.")
-    
-    spouse = await get_member(ctx, str(spouse_id))
-    if spouse:
-        await ctx.send(f"❤️ Người bạn đời hiện tại của **{ctx.author.display_name}** là **{spouse.display_name}**.")
-    else:
-        await ctx.send("⚠️ Bạn đã kết hôn, nhưng không tìm thấy người bạn đời đó trong server này nữa.")
       # ====================================================================
 # PHẦN 7: LỆNH TÙY CHỈNH (CUSTOMIZATION)
 # ====================================================================
