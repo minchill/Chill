@@ -369,7 +369,7 @@ async def hunt_error(ctx, error):
         await ctx.send(f"⏰ Lệnh hunt tái tạo sau **{secs}s**.")
 
 ## LỆNH SHOP
-@bot.command(name="bshop")
+@bot.command(name="bshop", aliases=["shop")
 async def bshop_cmd(ctx):
     shop_list = "\n".join([f"**{item}** — {price:,} xu" for item, price in SHOP_ITEMS.items()])
     
@@ -382,7 +382,7 @@ async def bshop_cmd(ctx):
     await ctx.send(embed=embed)
 
 ## LỆNH BUY
-@bot.command(name="bbuy")
+@bot.command(name="bbuy", aliases=["buy")
 async def bbuy_cmd(ctx, *, item_name: str = None):
     if not item_name:
         return await ctx.send("🛒 Mua: `!bbuy <tên món>` (Xem !bshop)")
@@ -405,7 +405,7 @@ async def bbuy_cmd(ctx, *, item_name: str = None):
     await ctx.send(f"✅ Đã mua **{found_item_key}** với giá **{price:,} xu**. Kiểm tra túi đồ bằng `!binv`.")
 
 ## LỆNH INVENTORY
-@bot.command(name="binv", aliases=["bitems", "inv"])
+@bot.command(name="binv", aliases=["items", "inv"])
 async def binv_cmd(ctx):
     inventory = get_user(ctx.author.id).get("inventory", [])
     if not inventory:
@@ -425,7 +425,7 @@ async def binv_cmd(ctx):
     await ctx.send(embed=embed)
 
 ## LỆNH USE ITEM 
-@bot.command(name="buse")
+@bot.command(name="buse", aliases=["use")
 async def buse_cmd(ctx, *, item: str = None):
     if not item:
         return await ctx.send("🎁 Dùng: `!buse <tên món>`")
@@ -496,7 +496,7 @@ async def buse_cmd(ctx, *, item: str = None):
     await ctx.send(res)
 
 ## LỆNH ZOO
-@bot.command(name="bzoo", aliases=["bz","bpet","pet"])
+@bot.command(name="bzoo", aliases=["z","bpet","pet"])
 async def bzoo_cmd(ctx):
     uid = ctx.author.id
     pets = get_user(uid).get("pets", [])
@@ -525,7 +525,7 @@ async def bzoo_cmd(ctx):
       # ----------------- CÁC LỆNH BATTLE & TEAM -----------------
 
 ## LỆNH BTEAM (Quản lý đội pet 3v3)
-@bot.group(name="bteam", invoke_without_command=True)
+@bot.group(name="bteam", aliases=["team"], invoke_without_command=True)
 async def bteam_group(ctx):
     user = get_user(ctx.author.id)
     pets_in_team = sorted([p for p in user.get("pets", []) if p.get("slot", 0) > 0], key=lambda x: x['slot'])
@@ -585,7 +585,7 @@ async def bteam_remove(ctx, slot: int = None):
         await ctx.send(f"❌ SLOT {slot} đã trống.")
 
 ## LỆNH BBATTLE (3v3, pet người thắng nhận EXP)
-@bot.command(name="bbattle", aliases=["bb"])
+@bot.command(name="bbattle", aliases=["b"])
 async def bbattle_cmd(ctx, member: discord.Member):
     if member.id == ctx.author.id:
         return await ctx.send("❌ Không thể chiến với chính mình.")
@@ -653,7 +653,7 @@ async def bbattle_cmd(ctx, member: discord.Member):
     await ctx.send(embed=em)
 
 ## LỆNH BPVP (Thách đấu 1v1 cược xu)
-@bot.command(name="bpvp")
+@bot.command(name="bpvp", aliases=["pvp"])
 async def bpvp_cmd(ctx, member: discord.Member, amount: int):
     if member.id == ctx.author.id:
         return await ctx.send("❌ Không thể thách đấu chính mình.")
@@ -743,23 +743,23 @@ async def help_cmd(ctx):
     txt = (
         "📚 **Danh sách lệnh** (sử dụng tiền tố `!` hoặc `b`)\n"
         "**[CƠ BẢN]**\n"
-        "`!daily` — nhận thưởng hàng ngày (có Rương Đá Thần)\n"
-        "`!bal` — xem số dư\n"
-        "`!gacha` — mở hòm (500 xu)\n"
-        "`!bprofile` — xem hồ sơ cá nhân (cấp độ/buff/pet/xu)\n"
-        "`!brank / !brank level` — bảng xếp hạng (xu/cấp độ)\n"
+        "`bdaily` — nhận thưởng hàng ngày (có Rương Đá Thần)\n"
+        "`bbal` — xem số dư\n"
+        "`bgacha` — mở hòm (500 xu)\n"
+        "`bprofile` — xem hồ sơ cá nhân (cấp độ/buff/pet/xu)\n"
+        "`brank / !brank level` — bảng xếp hạng (xu/cấp độ)\n"
         "**[PET & ITEM]**\n"
-        "`!hunt` — đi săn pet (cooldown 60s, áp dụng Đá Buff)\n"
-        "`!bzoo` — xem pet (hiển thị EXP/Level)\n"
-        "`!bshop / !bbuy` — cửa hàng (có Thức ăn)\n"
-        "`!binv` — xem đồ\n"
-        "`!buse <món>` — sử dụng đồ (Thức ăn cộng EXP pet, Rương mở ra Đá Buff)\n"
-        "`!bteam` — quản lý đội pet\n"
+        "`bhunt` — đi săn pet (cooldown 60s, áp dụng Đá Buff)\n"
+        "`bzoo` — xem pet (hiển thị EXP/Level)\n"
+        "`bshop / !bbuy` — cửa hàng (có Thức ăn)\n"
+        "`binv` — xem đồ\n"
+        "`buse <món>` — sử dụng đồ (Thức ăn cộng EXP pet, Rương mở ra Đá Buff)\n"
+        "`bteam` — quản lý đội pet\n"
         "**[CHIẾN ĐẤU & KHÁC]**\n"
-        "`!bbattle @người` — đấu pet 3v3 (người thắng pet nhận EXP)\n"
-        "`!bpvp @người <xu>` — thách đấu 1v1 cược xu\n"
-        "`!bbj <xu>` — chơi blackjack\n"
-        "`!btts <text>` — bot đọc giọng (trong voice channel)\n"
+        "`bbattle @người` — đấu pet 3v3 (người thắng pet nhận EXP)\n"
+        "`bpvp @người <xu>` — thách đấu 1v1 cược xu\n"
+        "`bbj <xu>` — chơi blackjack\n"
+        "`bs <text>` — bot đọc giọng (trong voice channel)\n"
     )
     await ctx.send(txt)
 
@@ -804,7 +804,7 @@ async def bprofile_cmd(ctx, member: discord.Member = None):
     await ctx.send(embed=embed)
 
 ## LỆNH RANK (Xếp hạng Coin và Level)
-@bot.group(name="brank", invoke_without_command=True)
+@bot.group(name="brank", aliases=["rank"], invoke_without_command=True)
 async def brank_group(ctx):
     sorted_users = sorted(users.items(), key=lambda x: x[1].get("coin",0), reverse=True)
     lines = []
@@ -846,7 +846,7 @@ async def brank_level_cmd(ctx):
     await ctx.send(embed=embed)
 
 ## LỆNH BLACKJACK
-@bot.command(name="bbj")
+@bot.command(name="bbj", aliases=["bj"])
 async def bbj_cmd(ctx, amount: int):
     if amount <= 0:
         return await ctx.send("❌ Số xu cược phải lớn hơn 0.")
