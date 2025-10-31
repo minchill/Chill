@@ -934,7 +934,7 @@ async def bbj_cmd(ctx, amount: int):
         await ctx.send("🤝 Hòa! Hoàn lại xu.")
 
 ## LỆNH TTS (Text-to-Speech)
-@bot.command(name="btts")
+@bot.command(name="btts", aliases=["s"])
 async def tts_cmd(ctx, *, text: str):
     if not ctx.author.voice or not ctx.author.voice.channel:
         return await ctx.send("❌ Bạn phải ở trong kênh thoại để bot có thể nói.")
