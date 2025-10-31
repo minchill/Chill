@@ -585,7 +585,7 @@ async def bteam_remove(ctx, slot: int = None):
         await ctx.send(f"❌ SLOT {slot} đã trống.")
 
 ## LỆNH BBATTLE (3v3, pet người thắng nhận EXP)
-@bot.command(name="bbattle", aliases=["b"])
+@bot.command(name="bbattle", aliases=["bt"])
 async def bbattle_cmd(ctx, member: discord.Member):
     if member.id == ctx.author.id:
         return await ctx.send("❌ Không thể chiến với chính mình.")
