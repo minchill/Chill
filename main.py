@@ -959,11 +959,10 @@ async def hunt_error(ctx, error):
         seconds = int(error.retry_after)
         await ctx.send(f"⏰ Bạn vừa đi săn rồi. Hãy chờ **{seconds}** giây nữa để tiếp tục!")
       # ====================================================================
-# PHẦN 6: LỆNH TƯƠNG TÁC (SOCIAL & ROLEPLAY) - ĐÃ FIX LỖI TRÙNG LẶP
+# PHẦN 6: LỆNH TƯƠNG TÁC (SOCIAL & ROLEPLAY) - ĐÃ FIX LỖI ALIAS
 # ====================================================================
 
 SOCIAL_ACTIONS = {
-    # ĐÃ XÓA "troll" KHỎI DANH SÁCH TỰ ĐỘNG ĐĂNG KÝ
     "hit": {"past": "đánh", "desc": "đã tung cú đấm chí mạng vào", "emoji": "💥", "aliases": ["dam"]}, 
     "hug": {"past": "ôm", "desc": "đã ôm chặt lấy", "emoji": "🫂", "aliases": ["om"]}, 
     "kiss": {"past": "hôn", "desc": "đã tặng một nụ hôn e thẹn cho", "emoji": "💖", "aliases": ["hon"]}, 
@@ -973,7 +972,7 @@ SOCIAL_ACTIONS = {
     "poke": {"past": "chọc", "desc": "đã chọc vào má", "emoji": "👉", "aliases": []}, 
     "yeu": {"past": "yêu", "desc": "đã gửi tình yêu đến", "emoji": "❤️", "aliases": ["love"]},
     "chui": {"past": "chửi", "desc": "đã chửi mắng thậm tệ", "emoji": "🤬", "aliases": []},
-    # Lệnh cá nhân (chỉ có tác dụng hiển thị)
+    # Lệnh cá nhân (có cùng giá trị past là "tự nhận là" -> dễ gây lỗi alias)
     "ngu": {"past": "tự nhận là", "desc": "đã tự nhận mình là", "emoji": "😴", "is_self": True, "aliases": []},
     "khon": {"past": "tự nhận là", "desc": "đã tự nhận mình là", "emoji": "💡", "is_self": True, "aliases": []},
 }
@@ -998,7 +997,7 @@ async def get_member(ctx, target_str):
         return None
 
 
-# HÀM CALLBACK CHUNG (Giữ nguyên)
+# HÀM CALLBACK CHUNG
 async def interact_cmd(ctx, target: str = None): 
     
     invoked_name = ctx.invoked_with.lower()
@@ -1009,7 +1008,7 @@ async def interact_cmd(ctx, target: str = None):
         
     action_data = SOCIAL_ACTIONS.get(action_name)
     
-    # FIX: Thêm logic để xử lý lệnh 'troll' thủ công
+    # FIX: Thêm logic để xử lý lệnh 'troll' thủ công (nếu action_name là 'troll')
     if action_name == "troll":
         action_data = {"past": "troll", "desc": "đã troll", "emoji": "😈", "aliases": []}
 
@@ -1050,22 +1049,32 @@ async def interact_cmd(ctx, target: str = None):
     await ctx.send(embed=embed)
 
 
-# Tạo lệnh tương tác và aliases cho từng hành động (ĐÃ SỬA LỖI)
+# Tạo lệnh tương tác và aliases cho từng hành động (ĐÃ SỬA LỖI VỀ ALIAS TỰ NHẬN LÀ)
 for action, data in SOCIAL_ACTIONS.items():
-    # Loại bỏ tên lệnh (action) khỏi danh sách aliases để tránh trùng lặp
-    aliases = [data["past"], action.capitalize(), data["past"].capitalize()]
+    aliases = []
+    # CHỈ THÊM data["past"] VÀO ALIASES NẾU NÓ KHÔNG PHẢI LÀ LỆNH TỰ TƯƠNG TÁC
+    # để tránh trùng lặp "tự nhận là" giữa ngu và khon
+    if not data.get("is_self", False):
+        aliases.append(data["past"])
+        aliases.append(data["past"].capitalize())
+    
+    # Thêm tên lệnh viết hoa và aliases tùy chỉnh
+    aliases.append(action.capitalize())
     aliases.extend(data.get("aliases", []))
+    
+    # Đảm bảo aliases không bị trùng lặp
+    aliases = list(set(aliases)) 
     
     bot.command(name=action, aliases=aliases)(interact_cmd)
 
 
-# --- BỔ SUNG LỆNH 'TROLL' RIÊNG BIỆT ---
+# --- BỔ SUNG LỆNH 'TROLL' RIÊNG BIỆT (ĐÃ FIX LỖI TRÙNG TÊN) ---
 @bot.command(name="troll", aliases=["Troll"])
 async def troll_cmd_fix(ctx, target: str = None):
-    # Định nghĩa dữ liệu troll và gọi hàm tương tác chung
+    # Định nghĩa dữ liệu troll tạm thời và gọi hàm tương tác chung
     SOCIAL_ACTIONS["troll"] = {"past": "troll", "desc": "đã troll", "emoji": "😈", "aliases": []}
     await interact_cmd(ctx, target)
-    # Xóa key tạm thời để không ảnh hưởng đến vòng lặp trên
+    # Xóa key tạm thời để không ảnh hưởng đến vòng lặp
     if "troll" in SOCIAL_ACTIONS:
         del SOCIAL_ACTIONS["troll"] 
 
