@@ -32,7 +32,7 @@ intents.members = True
 intents.presences = True # Cho các tác vụ như 'get_member'
 
 # Khởi tạo Bot với tiền tố CHỈ LÀ "b"
-bot = commands.Bot(command_prefix=["b"], intents=intents) 
+bot = commands.Bot(command_prefix=["b"], intents=intents, help_command=None) 
 # ====================================================================
 # PHẦN 2: CẤU HÌNH DATA VÀ HÀM TRỢ GIÚP (FIXED)
 # ====================================================================
