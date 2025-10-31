@@ -369,7 +369,7 @@ async def hunt_error(ctx, error):
         await ctx.send(f"⏰ Lệnh hunt tái tạo sau **{secs}s**.")
 
 ## LỆNH SHOP
-@bot.command(name="bshop", aliases=["shop")
+@bot.command(name="bshop", aliases=["shop"])
 async def bshop_cmd(ctx):
     shop_list = "\n".join([f"**{item}** — {price:,} xu" for item, price in SHOP_ITEMS.items()])
     
@@ -751,7 +751,7 @@ async def help_cmd(ctx):
         "**[PET & ITEM]**\n"
         "`bhunt` — đi săn pet (cooldown 60s, áp dụng Đá Buff)\n"
         "`bzoo` — xem pet (hiển thị EXP/Level)\n"
-        "`bshop / !bbuy` — cửa hàng (có Thức ăn)\n"
+        "`bshop / bbuy` — cửa hàng (có Thức ăn)\n"
         "`binv` — xem đồ\n"
         "`buse <món>` — sử dụng đồ (Thức ăn cộng EXP pet, Rương mở ra Đá Buff)\n"
         "`bteam` — quản lý đội pet\n"
