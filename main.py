@@ -11,13 +11,22 @@ from gtts import gTTS
 import aiohttp
 import io
 
-# --- CẤU HÌNH BOT (THAY THẾ TOKEN CỦA BẠN) ---
-TOKEN = "YOUR_BOT_TOKEN_HERE" # Thay thế bằng token Discord bot của bạn
-# Tiền tố lệnh có thể là '!' hoặc 'b' (đã xử lý trong on_message)
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
-bot = commands.Bot(command_prefix=['!', 'b'], intents=intents)
+# ...
+# --- CẤU HÌNH BOT (SỬ DỤNG BIẾN MÔI TRƯỜNG) ---
+TOKEN = os.getenv("DISCORD_TOKEN") # Đọc token từ biến môi trường
+# ...
+
+# Ở phần CHẠY BOT (Phần 6) cũng cần điều chỉnh check token:
+# ...
+if __name__ == "__main__":
+    if not TOKEN: # Check nếu token rỗng (chưa set biến môi trường)
+        print("🚨 Lỗi: Vui lòng cấu hình biến môi trường DISCORD_TOKEN.")
+    else:
+        try:
+            bot.run(TOKEN)
+        except discord.errors.LoginFailure:
+            print("🚨 Lỗi: Token Discord không hợp lệ. Vui lòng kiểm tra lại token của bạn.")
+            
 
 # ----------------- DATA (JSON) -----------------
 DATA_FILE = "user_data.json"
