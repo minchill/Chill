@@ -382,7 +382,7 @@ async def bshop_cmd(ctx):
     await ctx.send(embed=embed)
 
 ## LỆNH BUY
-@bot.command(name="bbuy", aliases=["buy")
+@bot.command(name="bbuy", aliases=["buy"])
 async def bbuy_cmd(ctx, *, item_name: str = None):
     if not item_name:
         return await ctx.send("🛒 Mua: `!bbuy <tên món>` (Xem !bshop)")
@@ -425,7 +425,7 @@ async def binv_cmd(ctx):
     await ctx.send(embed=embed)
 
 ## LỆNH USE ITEM 
-@bot.command(name="buse", aliases=["use")
+@bot.command(name="buse", aliases=["use"])
 async def buse_cmd(ctx, *, item: str = None):
     if not item:
         return await ctx.send("🎁 Dùng: `!buse <tên món>`")
