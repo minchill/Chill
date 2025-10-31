@@ -369,7 +369,7 @@ async def hunt_error(ctx, error):
         await ctx.send(f"⏰ Lệnh hunt tái tạo sau **{secs}s**.")
 
 ## LỆNH SHOP
-@bot.command(name="bshop", aliases=["shop"])
+@bot.command(name="bshop")
 async def bshop_cmd(ctx):
     shop_list = "\n".join([f"**{item}** — {price:,} xu" for item, price in SHOP_ITEMS.items()])
     
