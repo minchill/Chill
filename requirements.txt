@@ -1,0 +1,9 @@
+# Thư viện chính của bot Discord
+discord.py
+# Thư viện cho chức năng TTS (!btts)
+gTTS
+# Thư viện cho chức năng Voice/TTS
+PyNaCl
+# Thư viện cho xử lý file tạm thời trong TTS (mặc dù tempfile là built-in, nhưng để chắc chắn)
+# Thư viện HTTP cho asyncio (dùng cho aiohttp)
+aiohttp
