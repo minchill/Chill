@@ -1203,18 +1203,21 @@ async def profile_cmd(ctx, target: str = None):
 # @bot.command(name="deladmin", aliases=["removeadmin", "Deladmin", "Removeadmin"]) ... (giữ nguyên)
 # @bot.command(name="help", aliases=["commands", "hlep", "Help", "Commands"]) ... (giữ nguyên)
 
+# ... (Các lệnh Admin ở trên giữ nguyên) ...
+
 # ====================================================================
-# LỆNH PHÁT NHẠC MỚI (PLAY)
+# LỆNH PHÁT NHẠC (PLAY) - ĐÃ LOẠI BỎ ALIAS DƯ THỪA CHỮ B
 # ====================================================================
 
-@bot.command(name="play", aliases=["bplay", "btts", "Play", "Bplay", "Btts"])
+@bot.command(name="play", aliases=["p", "tts"]) # Dùng !play hoặc !p
 async def play_cmd(ctx, *, source: str = None):
     """
     Phát file âm thanh từ URL hoặc chuyển Text sang Speech (TTS).
-    Cú pháp: bplay <URL> hoặc bplay <Văn bản>
+    Cú pháp: !play <URL> hoặc !play <Văn bản>
     """
     if source is None:
-        return await ctx.send("❌ Cú pháp: `bplay <URL file âm thanh>` hoặc `bplay <văn bản TTS>`.")
+        # Sử dụng ctx.prefix để thông báo chính xác
+        return await ctx.send(f"❌ Cú pháp: `{ctx.prefix}play <URL file âm thanh>` hoặc `{ctx.prefix}play <văn bản TTS>`.")
 
     if not ctx.author.voice or not ctx.author.voice.channel:
         return await ctx.send("❌ Bạn phải tham gia vào kênh thoại (Voice Channel) để sử dụng lệnh này.")
@@ -1234,29 +1237,18 @@ async def play_cmd(ctx, *, source: str = None):
         await asyncio.sleep(0.5)
 
     try:
+        # Sử dụng is_valid_url(source) (đã có ở PHẦN 7)
         if is_valid_url(source) and (source.endswith(('.mp3', '.mp4', '.ogg', '.wav')) or "youtube" in source or "youtu.be" in source):
-            # --- PHÁT NHẠC TỪ URL (Sử dụng youtube-dl/yt-dlp qua FFmpeg) ---
-            
-            # Cấu hình FFmpeg (Dùng ytdl để xử lý link trực tiếp)
+            # --- PHÁT NHẠC TỪ URL ---
             FFMPEG_OPTIONS = {
                 'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
                 'options': '-vn'
             }
             
-            # Sử dụng ytdl để lấy stream URL chất lượng tốt nhất
-            try:
-                # Nếu bạn đã cài đặt yt-dlp và discord.py[voice] đầy đủ
-                # Tuy nhiên, để đơn giản, tôi sẽ dùng trực tiếp URL nếu là file MP3/MP4.
-                
-                # Cảnh báo: Discord.py chỉ hỗ trợ file stream trực tiếp.
-                # Phát URL trực tiếp:
-                vc.play(discord.FFmpegPCMAudio(source, **FFMPEG_OPTIONS), 
-                        after=lambda e: print('Done playing URL', e))
-                
-                await ctx.send(f"🎶 Đã bắt đầu phát nhạc từ URL: **{source}**")
-                
-            except Exception as e:
-                return await ctx.send(f"❌ Lỗi khi phát từ URL (FFmpeg): {e}")
+            vc.play(discord.FFmpegPCMAudio(source, **FFMPEG_OPTIONS), 
+                    after=lambda e: print('Done playing URL', e))
+            
+            await ctx.send(f"🎶 Đã bắt đầu phát nhạc từ URL: **{source}**")
             
         else:
             # --- CHUYỂN TEXT SANG SPEECH (TTS) ---
@@ -1272,13 +1264,7 @@ async def play_cmd(ctx, *, source: str = None):
                 await asyncio.sleep(1)
             os.remove(filename)
             
-        # Chờ phát xong nếu là URL (giữ kết nối)
-        if is_valid_url(source):
-            await asyncio.sleep(1) # Chờ 1 giây trước khi ngắt nếu không có loop/queue
-            # Nếu muốn bot không ngắt ngay:
-            # await asyncio.sleep(60) # Giữ kết nối trong 1 phút sau khi phát xong
-            
-        # Luôn ngắt kết nối sau khi phát xong (để tránh bot bị treo trong kênh thoại)
+        # Luôn ngắt kết nối sau khi phát xong
         await vc.disconnect()
         
     except Exception as e:
@@ -1290,9 +1276,13 @@ async def play_cmd(ctx, *, source: str = None):
         tts_filename = f"tts_{ctx.author.id}.mp3"
         if os.path.exists(tts_filename):
             os.remove(tts_filename)
-            
 
-@bot.command(name="stop", aliases=["leave", "disconnect", "Stop", "Leave", "Disconnect"])
+
+# ====================================================================
+# LỆNH DỪNG (STOP)
+# ====================================================================
+
+@bot.command(name="stop", aliases=["leave", "disconnect"])
 async def stop_cmd(ctx):
     """Dừng phát nhạc và ngắt kết nối bot khỏi kênh thoại."""
     vc = ctx.voice_client
@@ -1303,6 +1293,36 @@ async def stop_cmd(ctx):
         await ctx.send("🛑 Đã dừng phát nhạc và ngắt kết nối khỏi kênh thoại.")
     else:
         await ctx.send("❌ Bot hiện không ở trong kênh thoại nào.")
+
+
+# ====================================================================
+# LỆNH TRỢ GIÚP (HELP) - TRẢ LẠI ALIAS "BHELP"
+# ====================================================================
+
+@bot.command(name="help", aliases=["commands", "h", "bhelp"]) 
+async def help_cmd(ctx):
+    """Hiển thị danh sách các lệnh."""
+    prefix = ctx.prefix 
+    
+    embed = discord.Embed(
+        title="🤖 Danh Sách Lệnh của Bot",
+        description=f"Đây là các lệnh bạn có thể sử dụng (tiền tố lệnh: `{prefix}`).",
+        color=discord.Color.blue()
+    )
+    
+    # Thêm các lệnh chính
+    embed.add_field(name=f"🎶 {prefix}play <URL/Text> / {prefix}p", 
+                    value="Phát nhạc từ link hoặc chuyển văn bản thành giọng nói (TTS).", 
+                    inline=False)
+    embed.add_field(name=f"🛑 {prefix}stop / {prefix}leave", 
+                    value="Dừng phát nhạc và ngắt kết nối bot khỏi kênh thoại.", 
+                    inline=False)
+    embed.add_field(name=f"ℹ️ {prefix}help / {prefix}bhelp", 
+                    value="Hiển thị danh sách lệnh này.", 
+                    inline=False)
+    
+    await ctx.send(embed=embed)
+    
       # ====================================================================
 # PHẦN 9: LỆNH ANIME/MEDIA (Từ Railway)
 # ====================================================================
