@@ -959,11 +959,11 @@ async def hunt_error(ctx, error):
         seconds = int(error.retry_after)
         await ctx.send(f"⏰ Bạn vừa đi săn rồi. Hãy chờ **{seconds}** giây nữa để tiếp tục!")
       # ====================================================================
-# PHẦN 6: LỆNH TƯƠNG TÁC (SOCIAL & ROLEPLAY) - CODE ĐÃ SỬA LỖI
+# PHẦN 6: LỆNH TƯƠNG TÁC (SOCIAL & ROLEPLAY) - ĐÃ FIX LỖI TRÙNG LẶP
 # ====================================================================
 
 SOCIAL_ACTIONS = {
-    # FIX: Thêm aliases thiếu từ help_cmd (P.8)
+    # ĐÃ XÓA "troll" KHỎI DANH SÁCH TỰ ĐỘNG ĐĂNG KÝ
     "hit": {"past": "đánh", "desc": "đã tung cú đấm chí mạng vào", "emoji": "💥", "aliases": ["dam"]}, 
     "hug": {"past": "ôm", "desc": "đã ôm chặt lấy", "emoji": "🫂", "aliases": ["om"]}, 
     "kiss": {"past": "hôn", "desc": "đã tặng một nụ hôn e thẹn cho", "emoji": "💖", "aliases": ["hon"]}, 
@@ -973,39 +973,32 @@ SOCIAL_ACTIONS = {
     "poke": {"past": "chọc", "desc": "đã chọc vào má", "emoji": "👉", "aliases": []}, 
     "yeu": {"past": "yêu", "desc": "đã gửi tình yêu đến", "emoji": "❤️", "aliases": ["love"]},
     "chui": {"past": "chửi", "desc": "đã chửi mắng thậm tệ", "emoji": "🤬", "aliases": []},
-    "troll": {"past": "troll", "desc": "đã troll", "emoji": "😈", "aliases": []},
     # Lệnh cá nhân (chỉ có tác dụng hiển thị)
     "ngu": {"past": "tự nhận là", "desc": "đã tự nhận mình là", "emoji": "😴", "is_self": True, "aliases": []},
     "khon": {"past": "tự nhận là", "desc": "đã tự nhận mình là", "emoji": "💡", "is_self": True, "aliases": []},
 }
 MARRIAGE_FEE = 10000
 
-# Hàm trợ giúp lấy member
+# Hàm trợ giúp lấy member (giữ nguyên)
 async def get_member(ctx, target_str):
     if not target_str:
         return None
     try:
-        # Lọc ID từ mention (<@!ID> hoặc <@ID>)
         member_id = int(target_str.strip('<@!>'))
-        # Tìm trong guild trước
         if ctx.guild:
             member = ctx.guild.get_member(member_id)
             if member:
                 return member
-            # Thử fetch nếu không tìm thấy (cần intents.members)
             try:
                 return await ctx.guild.fetch_member(member_id)
             except discord.NotFound:
                 pass
-        
-        # Thử fetch user nếu không tìm thấy trong guild (chỉ user, không có member data)
         return await bot.fetch_user(member_id) 
-
     except (ValueError, discord.NotFound):
         return None
 
 
-# HÀM CALLBACK CHUNG (FIXED)
+# HÀM CALLBACK CHUNG (Giữ nguyên)
 async def interact_cmd(ctx, target: str = None): 
     
     invoked_name = ctx.invoked_with.lower()
@@ -1016,6 +1009,10 @@ async def interact_cmd(ctx, target: str = None):
         
     action_data = SOCIAL_ACTIONS.get(action_name)
     
+    # FIX: Thêm logic để xử lý lệnh 'troll' thủ công
+    if action_name == "troll":
+        action_data = {"past": "troll", "desc": "đã troll", "emoji": "😈", "aliases": []}
+
     if not action_data: return 
 
     is_self_action = action_data.get("is_self", False)
@@ -1027,7 +1024,6 @@ async def interact_cmd(ctx, target: str = None):
             description=f"{action_data['emoji']} **{ctx.author.display_name}** {action_data['desc']} **{display_name}**.",
             color=discord.Color.blue()
         )
-        # Không cần GIF cho self-action
         return await ctx.send(embed=embed)
 
 
@@ -1054,15 +1050,27 @@ async def interact_cmd(ctx, target: str = None):
     await ctx.send(embed=embed)
 
 
-# Tạo lệnh tương tác và aliases cho từng hành động (FIXED)
+# Tạo lệnh tương tác và aliases cho từng hành động (ĐÃ SỬA LỖI)
 for action, data in SOCIAL_ACTIONS.items():
+    # Loại bỏ tên lệnh (action) khỏi danh sách aliases để tránh trùng lặp
     aliases = [data["past"], action.capitalize(), data["past"].capitalize()]
     aliases.extend(data.get("aliases", []))
     
     bot.command(name=action, aliases=aliases)(interact_cmd)
 
 
-# --- CÁC LỆNH HÔN NHÂN/TÌNH YÊU ---
+# --- BỔ SUNG LỆNH 'TROLL' RIÊNG BIỆT ---
+@bot.command(name="troll", aliases=["Troll"])
+async def troll_cmd_fix(ctx, target: str = None):
+    # Định nghĩa dữ liệu troll và gọi hàm tương tác chung
+    SOCIAL_ACTIONS["troll"] = {"past": "troll", "desc": "đã troll", "emoji": "😈", "aliases": []}
+    await interact_cmd(ctx, target)
+    # Xóa key tạm thời để không ảnh hưởng đến vòng lặp trên
+    if "troll" in SOCIAL_ACTIONS:
+        del SOCIAL_ACTIONS["troll"] 
+
+
+# --- CÁC LỆNH HÔN NHÂN/TÌNH YÊU (Giữ nguyên) ---
 
 @bot.command(name="propose", aliases=["Propose"]) 
 async def propose_cmd(ctx, target: str = None):
@@ -1147,6 +1155,7 @@ async def check_spouse_cmd(ctx):
         await ctx.send(f"❤️ Người bạn đời hiện tại của **{ctx.author.display_name}** là **{spouse.display_name}**.")
     else:
         await ctx.send("⚠️ Bạn đã kết hôn, nhưng không tìm thấy người bạn đời đó trong server này nữa.")
+        
       # ====================================================================
 # PHẦN 7: LỆNH TÙY CHỈNH (CUSTOMIZATION) (FIXED)
 # ====================================================================
