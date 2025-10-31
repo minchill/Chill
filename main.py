@@ -1412,7 +1412,7 @@ async def help_cmd(ctx):
 # - `bitemshop` (shop) -> Đã xử lý ở P.3
 # - `bbuy` (buy) -> Đã xử lý ở P.3
 
-@bot.command(name="shoppet_dummy", aliases=["shoppet", "shpt"])
+@bot.command(name="shoppet_dummy", aliases=["shpt"])
 async def shoppet_dummy_cmd(ctx):
     """Giữ lại lệnh này để giữ cấu trúc 10 phần, nhưng sử dụng lệnh Shop chính."""
     await ctx.send("✅ Lệnh `bshoppet` (Cửa hàng Pet) đã được tích hợp vào lệnh `bshop` hoặc `bpetshop`!")
