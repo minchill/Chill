@@ -1417,11 +1417,8 @@ async def shoppet_dummy_cmd(ctx):
     """Giữ lại lệnh này để giữ cấu trúc 10 phần, nhưng sử dụng lệnh Shop chính."""
     await ctx.send("✅ Lệnh `bshoppet` (Cửa hàng Pet) đã được tích hợp vào lệnh `bshop` hoặc `bpetshop`!")
   # ====================================================================
-# PHẦN 10/10: HỆ THỐNG GAME VÀ KINH TẾ (NÂNG CAO - GỠ BỎ TRÙNG LẶP)
+# PHẦN 10: CHẠY BOT (ĐÃ FIX LỖI TOKEN CHO RAILWAY)
 # ====================================================================
-
-# ⚠️ LƯU Ý: TOÀN BỘ LOGIC CỦA PHẦN NÀY ĐÃ ĐƯỢC CHUYỂN HOẶC TÍCH HỢP VÀO
-#           CÁC PHẦN 2, 3, 4, 5 ĐỂ TRÁNH TRÙNG LẶP VÀ LỖI DỮ LIỆU.
 
 # CÁC LỆNH ĐÃ ĐƯỢC XỬ LÝ (TRÁNH TRÙNG LẶP):
 # - `binv` (inv) -> Đã xử lý ở P.4
@@ -1436,19 +1433,22 @@ async def sleep_cmd(ctx):
 
 
 # ====================================================================
-# CHẠY BOT (Dùng Token Bot của bạn)
+# CHẠY BOT (Dùng Biến Môi Trường DISCORD_TOKEN)
 # ====================================================================
-
-# Vui lòng điền token bot của bạn vào đây
-# Ví dụ: token = os.getenv("DISCORD_BOT_TOKEN") 
-# Hoặc: token = "MTIzNDU2Nzg5MDEyMzQ1Njc4OQ.ABCDEF.GHIJKLMNOPQRSTUVWXYZ"
-TOKEN = "YOUR_BOT_TOKEN_HERE" # 👈 ĐỔI TOKEN CỦA BẠN TẠI ĐÂY
 
 @bot.event
 async def on_ready():
-    load_data() # Gọi hàm load data khi bot sẵn sàng
-    print(f'✅ Bot đã sẵn sàng: {bot.user.name} (ID: {bot.user.id})')
-    print(f'Số lượng người dùng đã tải: {len(users)}')
+    # Giả sử hàm load_data() đã được định nghĩa ở các phần trước
+    try:
+        load_data() # Gọi hàm load data khi bot sẵn sàng
+        print(f'✅ Bot đã sẵn sàng: {bot.user.name} (ID: {bot.user.id})')
+        print(f'Số lượng người dùng đã tải: {len(users)}')
+    except NameError:
+        print("⚠️ CẢNH BÁO: Hàm load_data/biến users chưa được định nghĩa. Bot vẫn chạy nhưng không có data.")
+    except Exception as e:
+        print(f"❌ LỖI KHI TẢI DỮ LIỆU: {e}")
+        
+    await bot.change_presence(activity=discord.Game(name=f"bhelp | Chúc mọi người vui vẻ!"))
     print('-------------------------------------------')
 
 # Thêm logic để xử lý sự kiện khi lệnh không tồn tại (tránh lỗi)
@@ -1460,6 +1460,27 @@ async def on_command_error(ctx, error):
     else:
         # In các lỗi khác ra console để debug
         print(f"❌ LỖI LỆNH: {error}")
+        await ctx.send(f"❌ Đã xảy ra lỗi: {error}")
+
+if __name__ == "__main__":
+    # Đọc Token từ Biến Môi Trường DISCORD_TOKEN (Chuẩn Railway)
+    TOKEN = os.getenv('DISCORD_TOKEN') 
+    
+    if TOKEN:
+        try:
+            print("Đang khởi động bot...")
+            bot.run(TOKEN)
+        except discord.LoginFailure:
+            print("❌ LỖI KẾT NỐI: Token Bot không hợp lệ. Vui lòng kiểm tra lại biến DISCORD_TOKEN.")
+        except discord.HTTPException as e:
+            print(f"❌ LỖI KẾT NỐI DISCORD: Vui lòng kiểm tra Token và Intents. Chi tiết: {e}")
+        except Exception as e:
+            print(f"❌ LỖI KHÔNG XÁC ĐỊNH KHI CHẠY BOT: {e}")
+    else:
+        print("❌ LỖI CẤU HÌNH: Không tìm thấy biến môi trường DISCORD_TOKEN. Vui lòng thiết lập biến này trên Railway.")
+    
+# --- KẾT THÚC FILE main.py ---
+        
         await ctx.send(f"❌ Đã xảy ra lỗi: {error}")
 
 if __name__ == "__main__":
