@@ -1,10 +1,1 @@
-{
-  "build": {
-    "builder": "nixpacks",
-    "nixpacksConfig": {
-      "phases": {
-        "setup": "sudo apt-get update && sudo apt-get install -y ffmpeg"
-      }
-    }
-  }
-}
+
