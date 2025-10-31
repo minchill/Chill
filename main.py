@@ -10,23 +10,38 @@ from datetime import datetime
 from gtts import gTTS
 import aiohttp
 import io
+# Cần import cái này cho chức năng TTS (Phần 5)
+from discord import FFmpegPCMAudio 
 
-# ...
 # --- CẤU HÌNH BOT (SỬ DỤNG BIẾN MÔI TRƯỜNG) ---
-TOKEN = os.getenv("DISCORD_TOKEN") # Đọc token từ biến môi trường
-# ...
+# Lấy Token từ Biến Môi Trường DISCORD_TOKEN
+TOKEN = os.getenv("DISCORD_TOKEN") 
 
-# Ở phần CHẠY BOT (Phần 6) cũng cần điều chỉnh check token:
-# ...
-if __name__ == "__main__":
-    if not TOKEN: # Check nếu token rỗng (chưa set biến môi trường)
-        print("🚨 Lỗi: Vui lòng cấu hình biến môi trường DISCORD_TOKEN.")
-    else:
-        try:
-            bot.run(TOKEN)
-        except discord.errors.LoginFailure:
-            print("🚨 Lỗi: Token Discord không hợp lệ. Vui lòng kiểm tra lại token của bạn.")
-            
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+bot = commands.Bot(command_prefix=['!', 'b'], intents=intents)
+
+# ----------------- DATA (JSON) -----------------
+DATA_FILE = "user_data.json"
+
+def load_data(file_name=DATA_FILE):
+    """Tải dữ liệu từ file JSON."""
+    if os.path.exists(file_name):
+        with open(file_name, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+    return {}
+
+def save_data(data, file_name=DATA_FILE):
+    """Lưu dữ liệu vào file JSON."""
+    with open(file_name, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+users = load_data() 
+
 
 # ----------------- DATA (JSON) -----------------
 DATA_FILE = "user_data.json"
@@ -949,10 +964,13 @@ async def tts_cmd(ctx, *, text: str):
              await ctx.voice_client.disconnect()
   # ----------------- CHẠY BOT -----------------
 if __name__ == "__main__":
-    if TOKEN == "YOUR_BOT_TOKEN_HERE":
-        print("🚨 Lỗi: Vui lòng thay thế 'YOUR_BOT_TOKEN_HERE' bằng token Discord bot của bạn.")
+    if not TOKEN:
+        print("🚨 Lỗi: Vui lòng cấu hình biến môi trường DISCORD_TOKEN trên Railway.")
     else:
         try:
+            # Đảm bảo bạn đã kích hoạt tất cả Intents cần thiết trong Discord Developer Portal
             bot.run(TOKEN)
         except discord.errors.LoginFailure:
             print("🚨 Lỗi: Token Discord không hợp lệ. Vui lòng kiểm tra lại token của bạn.")
+        except Exception as e:
+            print(f"🚨 Lỗi không xác định: {e}")
