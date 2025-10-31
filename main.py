@@ -1207,7 +1207,7 @@ async def profile_cmd(ctx, target: str = None):
 # LỆNH PHÁT NHẠC MỚI (PLAY)
 # ====================================================================
 
-@bot.command(name="play", aliases=["p", "bplay", "btts", "Play", "P", "Bplay", "Btts"])
+@bot.command(name="play", aliases=["bplay", "btts", "Play", "Bplay", "Btts"])
 async def play_cmd(ctx, *, source: str = None):
     """
     Phát file âm thanh từ URL hoặc chuyển Text sang Speech (TTS).
