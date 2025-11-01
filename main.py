@@ -1,3 +1,6 @@
+================================
+PHẦN 1/10: KHỞI TẠO BOT VÀ IMPORTS CẦN THIẾT
+================================
 import discord
 from discord.ext import commands
 import asyncio
@@ -6,7 +9,7 @@ import json
 import random
 from gtts import gTTS 
 import re 
-from discord import ui # THƯ VIỆN CẦN THIẾT CHO NÚT BẤM VÀ DROPDOWN
+from discord import ui 
 
 # Định nghĩa Intents (Rất quan trọng cho Discord v2.0+)
 intents = discord.Intents.default()
@@ -22,6 +25,9 @@ CURRENCY_FILE = "currency.json"
 INVENTORY_FILE = "inventory.json"
 PET_FILE = "pets.json"
 ADMIN_FILE = "admin_list.txt"
+================================
+PHẦN 2/10: CẤU TRÚC DỮ LIỆU GAME (TƯƠNG TÁC, SHOP)
+================================
 # Cấu trúc dữ liệu cho các lệnh tương tác
 INTERACT_ACTIONS = {
     "yeu": {"text": "đã bày tỏ tình yêu với", "color": discord.Color.red()},
@@ -61,6 +67,9 @@ PET_STATS = {
     "cho_alaska": {"name": "Chó Alaska", "rarity": "Hiếm", "price": 50000, "hp": 25, "dmg": 5},
     "ho_trang": {"name": "Hổ Trắng", "rarity": "Thần Thoại", "price": 100000, "hp": 50, "dmg": 10}
 }
+================================
+PHẦN 3/10: CẤU TRÚC DỮ LIỆU MENU PHÂN TRANG (CHO DROPDOWN)
+================================
 # CẤU TRÚC DANH MỤC MENU (ĐỂ TẠO CÁC TRANG CỦA DROPDOWN)
 MENU_CATEGORIES = {
     "home": {
@@ -100,6 +109,9 @@ MENU_CATEGORIES = {
         "description": "Các thú cưng hiện có. Lệnh mua pet (buypet) đang được xây dựng.",
     }
 }
+================================
+PHẦN 4/10: LỆNH TƯƠNG TÁC (INTERACT) VÀ HÀM HỖ TRỢ
+================================
 # LỆNH TƯƠNG TÁC
 @bot.command(name="yeu", aliases=["hon", "om", "dam", "tat", "chui", "troll", "ngu", "khon"])
 async def interact_cmd(ctx, member: discord.Member = None):
@@ -132,7 +144,10 @@ def is_valid_url(url):
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' 
         r'(?::\d+)?(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(regex, url) is not None
-  # HÀM HỖ TRỢ ADMIN
+================================
+PHẦN 5/10: HÀM HỖ TRỢ ĐỌC/GHI DỮ LIỆU (GAME/ADMIN)
+================================
+# HÀM HỖ TRỢ ADMIN
 def get_admin_list():
     try:
         with open(ADMIN_FILE, "r") as f:
@@ -166,7 +181,10 @@ def ensure_user_exists(user_id):
     if str(user_id) not in currency_data:
         currency_data[str(user_id)] = 0 # Số dư ban đầu là 0
         save_data(currency_data, CURRENCY_FILE)
-      # Event Bot đã sẵn sàng
+        ================================
+PHẦN 6/10: EVENT HANDLERS VÀ LỆNH ADMIN
+================================
+# Event Bot đã sẵn sàng
 @bot.event
 async def on_ready():
     print(f'🤖 Bot đã sẵn sàng! Đăng nhập dưới tên: {bot.user.name}')
@@ -213,7 +231,10 @@ async def deladmin_cmd(ctx, member: discord.Member):
         await ctx.send(f"✅ Đã xóa **{member.display_name}** khỏi danh sách Admin bot.")
     else:
         await ctx.send(f"❌ **{member.display_name}** không có trong danh sách Admin.")
-      # LỆNH PHÁT NHẠC (PLAY/TTS) - ĐÃ FIX LỖI ALIAS 'p'
+        ================================
+PHẦN 7/10: LỆNH PHÁT NHẠC (PLAY/TTS)
+================================
+# LỆNH PHÁT NHẠC (PLAY/TTS) - ĐÃ FIX LỖI ALIAS 'p'
 @bot.command(name="play", aliases=["bplay", "btts", "Play", "Bplay", "Btts"]) 
 async def play_cmd(ctx, *, source: str = None):
     """Phát nhạc hoặc đọc văn bản TTS."""
@@ -268,7 +289,10 @@ async def stop_cmd(ctx):
         await ctx.send("🛑 Đã dừng phát nhạc và ngắt kết nối khỏi kênh thoại.")
     else:
         await ctx.send("❌ Bot hiện không ở trong kênh thoại nào.")
-      # HÀM HỖ TRỢ TẠO EMBED CHO MENU PHÂN TRANG
+              ================================
+PHẦN 8/10: HÀM HỖ TRỢ MENU VÀ LỚP VIEW (DROPDOWN/BUTTONS)
+================================
+# HÀM HỖ TRỢ TẠO EMBED CHO MENU PHÂN TRANG
 def get_menu_embed(category_id, prefix):
     """Tạo Embed dựa trên ID danh mục."""
     
@@ -327,22 +351,28 @@ class HelpShopView(discord.ui.View):
         super().__init__(timeout=180) 
         self.ctx = ctx
         self.prefix = ctx.prefix
+        self.message = None # Khởi tạo thuộc tính message
         
         # Thêm Dropdown (Row 0)
         self.add_item(PaginatorSelect(self.prefix))
         
-        # Thêm nút bấm chuyển trang (Row 1) - Các nút << < > >> không hoạt động
+        # Thêm nút bấm chuyển trang (Row 1)
         self.add_item(discord.ui.Button(label="<<", style=discord.ButtonStyle.grey, custom_id="first_page", disabled=True, row=1))
         self.add_item(discord.ui.Button(label="<", style=discord.ButtonStyle.grey, custom_id="prev_page", disabled=True, row=1))
-        # Nút Home
         self.add_item(discord.ui.Button(label="Home", style=discord.ButtonStyle.blurple, custom_id="home_page", emoji="🏠", row=1)) 
         self.add_item(discord.ui.Button(label=">", style=discord.ButtonStyle.grey, custom_id="next_page", disabled=True, row=1))
         self.add_item(discord.ui.Button(label=">>", style=discord.ButtonStyle.grey, custom_id="last_page", disabled=True, row=1))
         
     async def on_timeout(self):
-        for item in self.children:
-            item.disabled = True
-        await self.message.edit(view=self)
+        if self.message:
+            try:
+                for item in self.children:
+                    item.disabled = True
+                await self.message.edit(view=self)
+            except discord.NotFound:
+                pass
+            except Exception as e:
+                print(f"Lỗi khi xử lý timeout cho HelpShopView: {e}")
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.ctx.author:
@@ -354,12 +384,16 @@ class HelpShopView(discord.ui.View):
     async def home_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         new_embed = get_menu_embed("home", self.prefix)
         await interaction.response.edit_message(embed=new_embed, view=self)
-  # LỆNH GỌI MENU TƯƠNG TÁC (THAY THẾ LỆNH HELP CŨ)
+        ================================
+PHẦN 9/10: LỆNH HELP VÀ KINH TẾ CƠ BẢN
+================================
+# LỆNH GỌI MENU TƯƠNG TÁC (THAY THẾ LỆNH HELP CŨ)
 @bot.command(name="help", aliases=["commands", "h", "bhelp", "b"]) 
 async def help_cmd(ctx):
     """Hiển thị menu tương tác theo danh mục."""
     embed = get_menu_embed("home", ctx.prefix)
     view = HelpShopView(ctx)
+    # Gán đối tượng tin nhắn cho thuộc tính .message của View
     view.message = await ctx.send(embed=embed, view=view)
 
 # Vô hiệu hóa lệnh shop cũ, khuyến khích dùng menu
@@ -390,7 +424,10 @@ async def cf_cmd(ctx, member: discord.Member = None):
     )
     embed.set_footer(text=f"Gõ {ctx.prefix}help và chọn Item Shop.")
     await ctx.send(embed=embed)
-  # LỆNH MUA VẬT PHẨM (bbuy)
+    ================================
+PHẦN 10/10: LỆNH MUA SẮM VÀ GAME (BUY, INV, HUNT, ZOO) VÀ CHẠY BOT
+================================
+# LỆNH MUA VẬT PHẨM (bbuy)
 @bot.command(name="buy")
 async def buy_cmd(ctx, item_id: str = None, quantity: int = 1):
     """Mua một vật phẩm từ cửa hàng."""
